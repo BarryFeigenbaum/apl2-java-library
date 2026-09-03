@@ -3,13 +3,7 @@ package com.apl2.types;
 /**
  * Base interface for all scalar (0-rank) APL2 types.
  */
-public sealed interface Scalar extends APLType permits
-        BooleanType,
-        IntegerType,
-        FloatingPointType,
-        ComplexType,
-        CharacterType,
-        StringType {
+public interface Scalar extends APLType {
 
     @Override
     default int getRank() {

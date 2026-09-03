@@ -181,7 +181,15 @@ public final class FloatingPointArrayType implements APLType {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FloatingPointArrayType that = (FloatingPointArrayType) o;
-        return Arrays.equals(data, that.data, EPSILON) && Arrays.equals(shape, that.shape);
+        if (!Arrays.equals(shape, that.shape) || data.length != that.data.length) {
+            return false;
+        }
+        for (int i = 0; i < data.length; i++) {
+            if (Math.abs(data[i] - that.data[i]) >= EPSILON) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
