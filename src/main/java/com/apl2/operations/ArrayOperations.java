@@ -186,7 +186,22 @@ public class ArrayOperations {
         if (array.isEmpty()) {
             throw new IllegalArgumentException("Cannot take first element of empty array");
         }
-        return array.getElement(0).deepCopy();
+        if (array.getRank() == 1) {
+            return array.getElement(0).deepCopy();
+        }
+        int[] shape = array.getShape();
+        int cellSize = 1;
+        for (int i = 1; i < shape.length; i++) {
+            cellSize *= shape[i];
+        }
+        List<APLType> cell = new ArrayList<>(cellSize);
+        List<APLType> elements = array.getElements();
+        for (int i = 0; i < cellSize; i++) {
+            cell.add(elements.get(i).deepCopy());
+        }
+        int[] cellShape = new int[shape.length - 1];
+        System.arraycopy(shape, 1, cellShape, 0, cellShape.length);
+        return new ArrayType(cell, cellShape);
     }
 
     /**
@@ -196,7 +211,22 @@ public class ArrayOperations {
         if (array.isEmpty()) {
             return array;
         }
-        return drop(array, 1);
+        if (array.getRank() == 1) {
+            return drop(array, 1);
+        }
+        int[] shape = array.getShape();
+        int cellSize = 1;
+        for (int i = 1; i < shape.length; i++) {
+            cellSize *= shape[i];
+        }
+        List<APLType> elements = array.getElements();
+        List<APLType> remainder = new ArrayList<>();
+        for (int i = cellSize; i < elements.size(); i++) {
+            remainder.add(elements.get(i).deepCopy());
+        }
+        int[] newShape = shape.clone();
+        newShape[0] = Math.max(0, shape[0] - 1);
+        return new ArrayType(remainder, newShape);
     }
 
     /**
@@ -322,7 +352,7 @@ public class ArrayOperations {
     }
 
     /**
-     * Pick (dyadic ⊃).
+     * Pick (dyadic ⊃) using zero-based indexing.
      */
     public static APLType pick(APLType selector, APLType value) {
         if (!(value instanceof ArrayType array)) {
@@ -331,7 +361,14 @@ public class ArrayOperations {
         if (!(selector instanceof Scalar scalar)) {
             throw new IllegalArgumentException("Pick requires scalar selector");
         }
-        int index = (int) Math.floor(scalar.toNumeric());
+        double numericIndex = scalar.toNumeric();
+        if (numericIndex != Math.floor(numericIndex)) {
+            throw new IllegalArgumentException("Pick selector must be an integer");
+        }
+        if (numericIndex < Integer.MIN_VALUE || numericIndex > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Pick selector out of range");
+        }
+        int index = (int) numericIndex;
         return array.getElement(index).deepCopy();
     }
 
@@ -391,8 +428,13 @@ public class ArrayOperations {
             indices.add(i);
         }
         indices.sort((a, b) -> {
-            double da = ((Scalar) array.getElement(a)).toNumeric();
-            double db = ((Scalar) array.getElement(b)).toNumeric();
+            APLType left = array.getElement(a);
+            APLType right = array.getElement(b);
+            if (!(left instanceof Scalar leftScalar) || !(right instanceof Scalar rightScalar)) {
+                throw new IllegalArgumentException("Grade only supports scalar array elements");
+            }
+            double da = leftScalar.toNumeric();
+            double db = rightScalar.toNumeric();
             int cmp = Double.compare(da, db);
             return ascending ? cmp : -cmp;
         });

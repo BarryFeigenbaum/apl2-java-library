@@ -87,5 +87,27 @@ public class AxisOperationsTest {
         ArrayType appended = ArrayOperations.concatenate(matrix, matrix, 0);
         assertThat(appended.getShape()).containsExactly(4, 3);
         assertThat(((IntegerType) appended.getElement(6)).getValue()).isEqualTo(1);
+
+        ArrayType appendedLastAxis = ArrayOperations.concatenate(matrix, matrix, null);
+        assertThat(appendedLastAxis.getShape()).containsExactly(2, 6);
+        assertThat(((IntegerType) appendedLastAxis.getElement(0)).getValue()).isEqualTo(1);
+        assertThat(((IntegerType) appendedLastAxis.getElement(3)).getValue()).isEqualTo(1);
+    }
+
+    @Test
+    public void testFirstAndSplitOnMatrix() {
+        ArrayType matrix = new ArrayType(Arrays.asList(
+            new IntegerType(1), new IntegerType(2), new IntegerType(3),
+            new IntegerType(4), new IntegerType(5), new IntegerType(6)
+        ), 2, 3);
+
+        ArrayType firstRow = (ArrayType) ArrayOperations.first(matrix);
+        assertThat(firstRow.getShape()).containsExactly(3);
+        assertThat(((IntegerType) firstRow.getElement(0)).getValue()).isEqualTo(1);
+        assertThat(((IntegerType) firstRow.getElement(2)).getValue()).isEqualTo(3);
+
+        ArrayType split = ArrayOperations.split(matrix);
+        assertThat(split.getShape()).containsExactly(1, 3);
+        assertThat(((IntegerType) split.getElement(0)).getValue()).isEqualTo(4);
     }
 }

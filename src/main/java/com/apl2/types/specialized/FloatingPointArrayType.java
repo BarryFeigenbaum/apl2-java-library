@@ -15,7 +15,6 @@ public final class FloatingPointArrayType implements APLType {
     private final int rank;
     private final int depth;
     private static final int MAX_DEPTH = 15;
-    private static final double EPSILON = 1e-15;
 
     /**
      * Creates a 1-D floating-point array.
@@ -185,7 +184,19 @@ public final class FloatingPointArrayType implements APLType {
             return false;
         }
         for (int i = 0; i < data.length; i++) {
-            if (Math.abs(data[i] - that.data[i]) >= EPSILON) {
+            if (Double.isNaN(data[i]) || Double.isNaN(that.data[i])) {
+                if (!(Double.isNaN(data[i]) && Double.isNaN(that.data[i]))) {
+                    return false;
+                }
+                continue;
+            }
+            if (Double.isInfinite(data[i]) || Double.isInfinite(that.data[i])) {
+                if (data[i] != that.data[i]) {
+                    return false;
+                }
+                continue;
+            }
+            if (data[i] != that.data[i]) {
                 return false;
             }
         }
@@ -194,6 +205,15 @@ public final class FloatingPointArrayType implements APLType {
 
     @Override
     public int hashCode() {
-        return Objects.hash(Arrays.hashCode(data), Arrays.hashCode(shape));
+        long[] normalized = new long[data.length];
+        for (int i = 0; i < data.length; i++) {
+            double value = data[i];
+            if (Double.isNaN(value)) {
+                normalized[i] = 0x7ff8000000000000L;
+            } else {
+                normalized[i] = value == 0.0 ? 0L : Double.doubleToLongBits(value);
+            }
+        }
+        return Objects.hash(Arrays.hashCode(normalized), Arrays.hashCode(shape));
     }
 }

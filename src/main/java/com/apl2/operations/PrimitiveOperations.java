@@ -60,7 +60,7 @@ public final class PrimitiveOperations {
     }
 
     /**
-     * Dyadic iota: indices of right values in left.
+     * Monadic iota: generate 0..n-1.
      */
     public static APLType iota(APLType operand) {
         return MathOperations.iota(operand);
@@ -163,6 +163,9 @@ public final class PrimitiveOperations {
         String pattern = left instanceof StringType s ? s.getValue() : left.toString();
         DecimalFormat decimalFormat = new DecimalFormat(pattern);
         if (right instanceof Scalar scalar) {
+            if (!isPatternFormattableScalar(scalar)) {
+                throw new IllegalArgumentException("Pattern formatting requires numeric scalar values");
+            }
             return new StringType(decimalFormat.format(scalar.toNumeric()));
         }
         return new StringType(right.toString());
@@ -194,6 +197,18 @@ public final class PrimitiveOperations {
         if (numeric < 0 || numeric != Math.floor(numeric)) {
             throw new IllegalArgumentException(name + " must be a non-negative integer");
         }
+        if (numeric > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(name + " is too large");
+        }
         return (int) numeric;
+    }
+
+    private static boolean isPatternFormattableScalar(Scalar scalar) {
+        return scalar instanceof BooleanType
+            || scalar instanceof IntegerType
+            || scalar instanceof FloatingPointType
+            || scalar instanceof CharacterType
+            || scalar instanceof BigIntegerType
+            || scalar instanceof BigDecimalType;
     }
 }

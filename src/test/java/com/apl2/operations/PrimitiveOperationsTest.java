@@ -31,7 +31,7 @@ public class PrimitiveOperationsTest {
         APLType factorial = MathOperations.factorial(new IntegerType(5));
         assertThat(((IntegerType) factorial).getValue()).isEqualTo(120);
 
-        APLType binomial = MathOperations.binomial(new IntegerType(5), new IntegerType(2));
+        APLType binomial = MathOperations.binomial(new IntegerType(2), new IntegerType(5));
         assertThat(((IntegerType) binomial).getValue()).isEqualTo(10);
     }
 
@@ -89,6 +89,15 @@ public class PrimitiveOperationsTest {
 
         StringType formatted = (StringType) PrimitiveOperations.formatWithPattern(new StringType("0.00"), new FloatingPointType(3.14159));
         assertThat(formatted.getValue()).isEqualTo("3.14");
+
+        ArrayType array = new ArrayType(List.of(new IntegerType(1), new IntegerType(2)));
+        StringType formattedArray = (StringType) PrimitiveOperations.formatWithPattern(new StringType("0.00"), array);
+        assertThat(formattedArray.getValue()).isEqualTo(array.toString());
+
+        assertThatThrownBy(() -> PrimitiveOperations.roll(new IntegerType(0)))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> PrimitiveOperations.deal(new IntegerType(3), new IntegerType(2)))
+            .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

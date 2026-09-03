@@ -70,11 +70,13 @@ public class ReductionOperations implements Reduction {
     }
 
     public static APLType reduce(ArrayType array, BinaryOperator<APLType> function, Integer axis) {
-        return reduce(array, (DyadicFunction) function::apply, axis);
+        DyadicFunction operator = (left, right) -> function.apply(left, right);
+        return reduce(array, operator, axis);
     }
 
     public static APLType reduceFirstAxis(ArrayType array, BinaryOperator<APLType> function) {
-        return reduce(array, (DyadicFunction) function::apply, 0);
+        DyadicFunction operator = (left, right) -> function.apply(left, right);
+        return reduce(array, operator, 0);
     }
 
     private static int normalizeAxis(Integer axis, int rank) {

@@ -67,11 +67,13 @@ public class ScanOperations implements Scan {
     }
 
     public static APLType scan(ArrayType array, BinaryOperator<APLType> function, Integer axis) {
-        return scan(array, (DyadicFunction) function::apply, axis);
+        DyadicFunction operator = (left, right) -> function.apply(left, right);
+        return scan(array, operator, axis);
     }
 
     public static APLType scanFirstAxis(ArrayType array, BinaryOperator<APLType> function) {
-        return scan(array, (DyadicFunction) function::apply, 0);
+        DyadicFunction operator = (left, right) -> function.apply(left, right);
+        return scan(array, operator, 0);
     }
 
     private static int normalizeAxis(Integer axis, int rank) {

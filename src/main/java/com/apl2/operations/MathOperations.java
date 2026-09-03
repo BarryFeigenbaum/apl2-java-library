@@ -337,11 +337,11 @@ public class MathOperations {
     }
 
     /**
-     * Binomial (dyadic !): left choose right
+     * Binomial (dyadic !): left argument chooses from right argument (right choose left).
      */
     public static APLType binomial(APLType left, APLType right) {
-        long n = toNonNegativeInteger(left, "Binomial left argument");
-        long k = toNonNegativeInteger(right, "Binomial right argument");
+        long k = toNonNegativeInteger(left, "Binomial left argument");
+        long n = toNonNegativeInteger(right, "Binomial right argument");
         if (k > n) {
             return new IntegerType(0);
         }
@@ -433,7 +433,16 @@ public class MathOperations {
         if (left instanceof ArrayType lArr && right instanceof ArrayType rArr) {
             return new BooleanType(lArr.equals(rArr));
         }
-        if (left instanceof Scalar && right instanceof Scalar) {
+        if (left instanceof BigIntegerType lBigInt && right instanceof BigIntegerType rBigInt) {
+            return new BooleanType(lBigInt.getValue().equals(rBigInt.getValue()));
+        }
+        if (left instanceof BigDecimalType lBigDec && right instanceof BigDecimalType rBigDec) {
+            return new BooleanType(lBigDec.getValue().compareTo(rBigDec.getValue()) == 0);
+        }
+        if (left instanceof ComplexType lComplex && right instanceof ComplexType rComplex) {
+            return new BooleanType(lComplex.equals(rComplex));
+        }
+        if (left instanceof Scalar && right instanceof Scalar && isNumericScalar(left) && isNumericScalar(right)) {
             return new BooleanType(Math.abs(toNumeric(left) - toNumeric(right)) < 1e-15);
         }
         return new BooleanType(left.equals(right));
@@ -479,6 +488,9 @@ public class MathOperations {
      */
     public static APLType iota(APLType operand) {
         long n = toNonNegativeInteger(operand, "Iota argument");
+        if (n > 1_000_000) {
+            throw new IllegalArgumentException("Iota argument too large: " + n);
+        }
         List<APLType> elements = new ArrayList<>();
         for (long i = 0; i < n; i++) {
             elements.add(new IntegerType(i));
@@ -502,5 +514,12 @@ public class MathOperations {
             throw new ArithmeticException(name + " must be a non-negative integer");
         }
         return (long) numeric;
+    }
+
+    private static boolean isNumericScalar(APLType value) {
+        return value instanceof IntegerType
+            || value instanceof FloatingPointType
+            || value instanceof BooleanType
+            || value instanceof CharacterType;
     }
 }
