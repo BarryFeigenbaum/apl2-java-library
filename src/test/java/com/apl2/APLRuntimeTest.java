@@ -5,6 +5,7 @@ import com.apl2.operations.MathOperations;
 import com.apl2.operations.PrimitiveOperations;
 import com.apl2.types.APLType;
 import com.apl2.types.ArrayType;
+import com.apl2.types.BigDecimalType;
 import com.apl2.types.BooleanType;
 import com.apl2.types.ComplexType;
 import com.apl2.types.FloatingPointType;
@@ -13,6 +14,7 @@ import com.apl2.types.StringType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -105,6 +107,9 @@ public class APLRuntimeTest {
 
         StringType formattedComplex = (StringType) PrimitiveOperations.format(new ComplexType(2.345, -6.789));
         assertThat(formattedComplex.getValue()).isEqualTo("2.35-6.79i");
+
+        StringType formattedBigDecimal = (StringType) PrimitiveOperations.format(new BigDecimalType(new BigDecimal("123.456")));
+        assertThat(formattedBigDecimal.getValue()).isEqualTo("123.46");
 
         StringType formattedArray = (StringType) PrimitiveOperations.format(
             new ArrayType(List.of(new IntegerType(1), new FloatingPointType(2.345)))

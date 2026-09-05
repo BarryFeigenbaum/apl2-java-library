@@ -1,7 +1,5 @@
 package com.apl2.types;
 
-import com.apl2.APLRuntime;
-
 import java.util.Objects;
 
 /**
@@ -49,7 +47,7 @@ public final class FloatingPointType implements Scalar {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FloatingPointType that = (FloatingPointType) o;
-        return APLRuntime.getInstance().areClose(that.value, value);
+        return Math.abs(that.value - value) < EPSILON;
     }
 
     @Override

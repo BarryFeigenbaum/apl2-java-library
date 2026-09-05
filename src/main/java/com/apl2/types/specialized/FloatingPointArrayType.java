@@ -188,7 +188,7 @@ public final class FloatingPointArrayType implements APLType {
                 }
                 continue;
             }
-            if (!APLRuntime.getInstance().areClose(data[i], that.data[i])) {
+            if (data[i] != that.data[i]) {
                 return false;
             }
         }

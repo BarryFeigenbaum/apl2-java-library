@@ -6,6 +6,7 @@ import com.apl2.types.specialized.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -431,22 +432,7 @@ public class MathOperations {
      * Equals (=)
      */
     public static APLType equal(APLType left, APLType right) {
-        if (left instanceof ArrayType lArr && right instanceof ArrayType rArr) {
-            return new BooleanType(lArr.equals(rArr));
-        }
-        if (left instanceof BigIntegerType lBigInt && right instanceof BigIntegerType rBigInt) {
-            return new BooleanType(lBigInt.getValue().equals(rBigInt.getValue()));
-        }
-        if (left instanceof BigDecimalType lBigDec && right instanceof BigDecimalType rBigDec) {
-            return new BooleanType(lBigDec.getValue().compareTo(rBigDec.getValue()) == 0);
-        }
-        if (left instanceof ComplexType lComplex && right instanceof ComplexType rComplex) {
-            return new BooleanType(lComplex.equals(rComplex));
-        }
-        if (left instanceof Scalar && right instanceof Scalar && isNumericScalar(left) && isNumericScalar(right)) {
-            return new BooleanType(APLRuntime.getInstance().areClose(toNumeric(left), toNumeric(right)));
-        }
-        return new BooleanType(left.equals(right));
+        return new BooleanType(valuesEqual(left, right));
     }
 
     /**
@@ -516,6 +502,29 @@ public class MathOperations {
             throw new ArithmeticException(name + " must be a non-negative integer");
         }
         return (long) numeric;
+    }
+
+    private static boolean valuesEqual(APLType left, APLType right) {
+        if (left instanceof ArrayType lArr && right instanceof ArrayType rArr) {
+            if (!Arrays.equals(lArr.getShape(), rArr.getShape())) {
+                return false;
+            }
+            for (int i = 0; i < lArr.size(); i++) {
+                if (!valuesEqual(lArr.getRawElement(i), rArr.getRawElement(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (left instanceof ComplexType lComplex && right instanceof ComplexType rComplex) {
+            APLRuntime runtime = APLRuntime.getInstance();
+            return runtime.areClose(lComplex.getReal(), rComplex.getReal())
+                && runtime.areClose(lComplex.getImaginary(), rComplex.getImaginary());
+        }
+        if (left instanceof Scalar && right instanceof Scalar && isNumericScalar(left) && isNumericScalar(right)) {
+            return APLRuntime.getInstance().areClose(toNumeric(left), toNumeric(right));
+        }
+        return left.equals(right);
     }
 
     private static boolean isNumericScalar(APLType value) {

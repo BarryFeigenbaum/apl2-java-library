@@ -1,7 +1,5 @@
 package com.apl2.types;
 
-import com.apl2.APLRuntime;
-
 import java.util.Objects;
 
 /**
@@ -80,9 +78,8 @@ public final class ComplexType implements Scalar {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ComplexType that = (ComplexType) o;
-        APLRuntime runtime = APLRuntime.getInstance();
-        return runtime.areClose(that.real, real) &&
-               runtime.areClose(that.imaginary, imaginary);
+        return Math.abs(that.real - real) < EPSILON &&
+               Math.abs(that.imaginary - imaginary) < EPSILON;
     }
 
     @Override
