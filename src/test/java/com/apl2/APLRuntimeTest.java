@@ -6,6 +6,7 @@ import com.apl2.operations.PrimitiveOperations;
 import com.apl2.types.APLType;
 import com.apl2.types.ArrayType;
 import com.apl2.types.BigDecimalType;
+import com.apl2.types.BigIntegerType;
 import com.apl2.types.BooleanType;
 import com.apl2.types.ComplexType;
 import com.apl2.types.FloatingPointType;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -136,5 +138,16 @@ public class APLRuntimeTest {
         ArrayType left = new ArrayType(List.of(new FloatingPointType(1.0), new FloatingPointType(2.0)));
         ArrayType right = new ArrayType(List.of(new FloatingPointType(1.005), new FloatingPointType(1.995)));
         assertThat(((BooleanType) MathOperations.equal(left, right)).getValue()).isTrue();
+
+        assertThat(((BooleanType) MathOperations.equal(new IntegerType(1), new IntegerType(2))).getValue()).isFalse();
+        assertThat(((BooleanType) MathOperations.equal(new BooleanType(true), new BooleanType(false))).getValue()).isFalse();
+        assertThat(((BooleanType) MathOperations.equal(
+            new BigIntegerType(new BigInteger("1000000000000000000000000001")),
+            new BigIntegerType(new BigInteger("1000000000000000000000000002"))
+        )).getValue()).isFalse();
+        assertThat(((BooleanType) MathOperations.equal(
+            new BigDecimalType(new BigDecimal("1.0000000000000000001")),
+            new BigDecimalType(new BigDecimal("1.0000000000000000002"))
+        )).getValue()).isFalse();
     }
 }

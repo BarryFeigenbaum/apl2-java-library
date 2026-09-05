@@ -521,18 +521,28 @@ public class MathOperations {
             return runtime.areClose(lComplex.getReal(), rComplex.getReal())
                 && runtime.areClose(lComplex.getImaginary(), rComplex.getImaginary());
         }
-        if (left instanceof Scalar && right instanceof Scalar && isNumericScalar(left) && isNumericScalar(right)) {
+        if (left instanceof BigIntegerType lBigInt && right instanceof BigIntegerType rBigInt) {
+            return lBigInt.getValue().equals(rBigInt.getValue());
+        }
+        if (left instanceof BigDecimalType lBigDec && right instanceof BigDecimalType rBigDec) {
+            return lBigDec.getValue().compareTo(rBigDec.getValue()) == 0;
+        }
+        if (left instanceof Scalar && right instanceof Scalar && isApproximateNumericScalar(left, right)) {
             return APLRuntime.getInstance().areClose(toNumeric(left), toNumeric(right));
         }
         return left.equals(right);
     }
 
-    private static boolean isNumericScalar(APLType value) {
-        return value instanceof IntegerType
-            || value instanceof FloatingPointType
-            || value instanceof BooleanType
-            || value instanceof CharacterType
-            || value instanceof BigIntegerType
-            || value instanceof BigDecimalType;
+    private static boolean isApproximateNumericScalar(APLType left, APLType right) {
+        if (left instanceof FloatingPointType && right instanceof FloatingPointType) {
+            return true;
+        }
+        if (left instanceof FloatingPointType) {
+            return right instanceof IntegerType || right instanceof BooleanType || right instanceof CharacterType;
+        }
+        if (right instanceof FloatingPointType) {
+            return left instanceof IntegerType || left instanceof BooleanType || left instanceof CharacterType;
+        }
+        return false;
     }
 }
