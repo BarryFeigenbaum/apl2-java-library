@@ -146,8 +146,12 @@ public class APLRuntimeTest {
             new BigIntegerType(new BigInteger("1000000000000000000000000002"))
         )).getValue()).isFalse();
         assertThat(((BooleanType) MathOperations.equal(
-            new BigDecimalType(new BigDecimal("1.0000000000000000001")),
-            new BigDecimalType(new BigDecimal("1.0000000000000000002"))
+            new BigDecimalType(new BigDecimal("1.000")),
+            new BigDecimalType(new BigDecimal("1.005"))
+        )).getValue()).isTrue();
+        assertThat(((BooleanType) MathOperations.equal(
+            new BigDecimalType(new BigDecimal("1.000")),
+            new BigDecimalType(new BigDecimal("2.000"))
         )).getValue()).isFalse();
     }
 }

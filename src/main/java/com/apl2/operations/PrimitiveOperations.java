@@ -171,7 +171,7 @@ public final class PrimitiveOperations {
             }
             return new StringType(decimalFormat.format(scalar.toNumeric()));
         }
-        return new StringType(APLRuntime.getInstance().format(right));
+        return new StringType(right.toString());
     }
 
     private static boolean toBoolean(APLType value) {

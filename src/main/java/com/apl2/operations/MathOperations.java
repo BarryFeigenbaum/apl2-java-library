@@ -525,7 +525,9 @@ public class MathOperations {
             return lBigInt.getValue().equals(rBigInt.getValue());
         }
         if (left instanceof BigDecimalType lBigDec && right instanceof BigDecimalType rBigDec) {
-            return lBigDec.getValue().compareTo(rBigDec.getValue()) == 0;
+            BigDecimal delta = lBigDec.getValue().subtract(rBigDec.getValue()).abs();
+            BigDecimal tolerance = BigDecimal.valueOf(APLRuntime.getInstance().currentContext().getComparisonTolerance());
+            return delta.compareTo(tolerance) <= 0;
         }
         if (left instanceof Scalar && right instanceof Scalar && isApproximateNumericScalar(left, right)) {
             return APLRuntime.getInstance().areClose(toNumeric(left), toNumeric(right));
