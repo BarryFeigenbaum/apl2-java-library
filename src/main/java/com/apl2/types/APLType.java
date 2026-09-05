@@ -6,14 +6,7 @@ import java.util.Objects;
  * Base interface for all APL2 data types.
  * Represents the fundamental type hierarchy in APL2.
  */
-public sealed interface APLType permits
-        BooleanType,
-        IntegerType,
-        FloatingPointType,
-        ComplexType,
-        CharacterType,
-        StringType,
-        ArrayType {
+public interface APLType {
 
     /**
      * Returns the type name for debugging and display purposes.

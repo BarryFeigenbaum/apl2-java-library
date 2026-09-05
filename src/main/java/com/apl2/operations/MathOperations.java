@@ -4,6 +4,8 @@ import com.apl2.types.*;
 import com.apl2.types.specialized.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Core APL2 mathematical operations.
@@ -153,7 +155,7 @@ public class MathOperations {
             return new FloatingPointType(-f.getValue());
         }
         if (operand instanceof ComplexType c) {
-            return c.negate();
+            return new ComplexType(-c.getReal(), -c.getImaginary());
         }
         if (operand instanceof BigIntegerType b) {
             return b.negate();
@@ -234,6 +236,44 @@ public class MathOperations {
     }
 
     /**
+     * Conjugate/identity (monadic +)
+     */
+    public static APLType conjugate(APLType operand) {
+        if (operand instanceof ComplexType c) {
+            return c.conjugate();
+        }
+        return operand.deepCopy();
+    }
+
+    /**
+     * Signum (monadic ×)
+     */
+    public static APLType signum(APLType operand) {
+        return sign(operand);
+    }
+
+    /**
+     * Reciprocal (monadic ÷)
+     */
+    public static APLType reciprocal(APLType operand) {
+        return divide(new IntegerType(1), operand);
+    }
+
+    /**
+     * Residue (dyadic |)
+     */
+    public static APLType residue(APLType left, APLType right) {
+        return modulo(left, right);
+    }
+
+    /**
+     * Magnitude (monadic |)
+     */
+    public static APLType magnitude(APLType operand) {
+        return abs(operand);
+    }
+
+    /**
      * Natural logarithm (monadic ⍟)
      */
     public static APLType log(APLType operand) {
@@ -249,6 +289,72 @@ public class MathOperations {
      */
     public static APLType exp(APLType operand) {
         return new FloatingPointType(Math.exp(toNumeric(operand)));
+    }
+
+    /**
+     * Natural logarithm (monadic ⍟)
+     */
+    public static APLType naturalLog(APLType operand) {
+        return log(operand);
+    }
+
+    /**
+     * Exponential (monadic *)
+     */
+    public static APLType exponential(APLType operand) {
+        return exp(operand);
+    }
+
+    /**
+     * Logarithm with base (dyadic ⍟): log base left of right
+     */
+    public static APLType logarithm(APLType left, APLType right) {
+        double base = toNumeric(left);
+        double value = toNumeric(right);
+        if (base <= 0 || Math.abs(base - 1.0) < 1e-15 || value <= 0) {
+            throw new ArithmeticException("Invalid arguments for logarithm");
+        }
+        return new FloatingPointType(Math.log(value) / Math.log(base));
+    }
+
+    /**
+     * Factorial (monadic !)
+     */
+    public static APLType factorial(APLType operand) {
+        double value = toNumeric(operand);
+        if (value < 0 || value != Math.floor(value)) {
+            throw new ArithmeticException("Factorial requires a non-negative integer");
+        }
+        long n = (long) value;
+        BigInteger result = BigInteger.ONE;
+        for (long i = 2; i <= n; i++) {
+            result = result.multiply(BigInteger.valueOf(i));
+        }
+        if (result.bitLength() < 63) {
+            return new IntegerType(result.longValue());
+        }
+        return new BigIntegerType(result);
+    }
+
+    /**
+     * Binomial (dyadic !): left argument chooses from right argument (right choose left).
+     */
+    public static APLType binomial(APLType left, APLType right) {
+        long k = toNonNegativeInteger(left, "Binomial left argument");
+        long n = toNonNegativeInteger(right, "Binomial right argument");
+        if (k > n) {
+            return new IntegerType(0);
+        }
+        long m = Math.min(k, n - k);
+        BigInteger result = BigInteger.ONE;
+        for (long i = 1; i <= m; i++) {
+            result = result.multiply(BigInteger.valueOf(n - m + i))
+                           .divide(BigInteger.valueOf(i));
+        }
+        if (result.bitLength() < 63) {
+            return new IntegerType(result.longValue());
+        }
+        return new BigIntegerType(result);
     }
 
     /**
@@ -273,6 +379,36 @@ public class MathOperations {
     }
 
     /**
+     * Circle functions (dyadic ∘) using APL function codes.
+     */
+    public static APLType circle(APLType left, APLType right) {
+        int fn = (int) Math.round(toNumeric(left));
+        double x = toNumeric(right);
+        return switch (fn) {
+            case 1 -> new FloatingPointType(Math.sin(x));
+            case 2 -> new FloatingPointType(Math.cos(x));
+            case 3 -> new FloatingPointType(Math.tan(x));
+            case -1 -> new FloatingPointType(Math.asin(x));
+            case -2 -> new FloatingPointType(Math.acos(x));
+            case -3 -> new FloatingPointType(Math.atan(x));
+            case 5 -> new FloatingPointType(Math.sinh(x));
+            case 6 -> new FloatingPointType(Math.cosh(x));
+            case 7 -> new FloatingPointType(Math.tanh(x));
+            case -5 -> new FloatingPointType(Math.log(x + Math.sqrt(x * x + 1)));
+            case -6 -> new FloatingPointType(Math.log(x + Math.sqrt(x * x - 1)));
+            case -7 -> new FloatingPointType(0.5 * Math.log((1 + x) / (1 - x)));
+            default -> throw new IllegalArgumentException("Unsupported circle function code: " + fn);
+        };
+    }
+
+    /**
+     * Circle functions alias.
+     */
+    public static APLType circleFunctions(APLType left, APLType right) {
+        return circle(left, right);
+    }
+
+    /**
      * Maximum (dyadic ⌈)
      */
     public static APLType max(APLType left, APLType right) {
@@ -291,6 +427,78 @@ public class MathOperations {
     }
 
     /**
+     * Equals (=)
+     */
+    public static APLType equal(APLType left, APLType right) {
+        if (left instanceof ArrayType lArr && right instanceof ArrayType rArr) {
+            return new BooleanType(lArr.equals(rArr));
+        }
+        if (left instanceof BigIntegerType lBigInt && right instanceof BigIntegerType rBigInt) {
+            return new BooleanType(lBigInt.getValue().equals(rBigInt.getValue()));
+        }
+        if (left instanceof BigDecimalType lBigDec && right instanceof BigDecimalType rBigDec) {
+            return new BooleanType(lBigDec.getValue().compareTo(rBigDec.getValue()) == 0);
+        }
+        if (left instanceof ComplexType lComplex && right instanceof ComplexType rComplex) {
+            return new BooleanType(lComplex.equals(rComplex));
+        }
+        if (left instanceof Scalar && right instanceof Scalar && isNumericScalar(left) && isNumericScalar(right)) {
+            return new BooleanType(Math.abs(toNumeric(left) - toNumeric(right)) < 1e-15);
+        }
+        return new BooleanType(left.equals(right));
+    }
+
+    /**
+     * Not equals (≠)
+     */
+    public static APLType notEqual(APLType left, APLType right) {
+        return new BooleanType(!((BooleanType) equal(left, right)).getValue());
+    }
+
+    /**
+     * Less than (<)
+     */
+    public static APLType lessThan(APLType left, APLType right) {
+        return new BooleanType(toNumeric(left) < toNumeric(right));
+    }
+
+    /**
+     * Less or equal (≤)
+     */
+    public static APLType lessEqual(APLType left, APLType right) {
+        return new BooleanType(toNumeric(left) <= toNumeric(right));
+    }
+
+    /**
+     * Greater than (>)
+     */
+    public static APLType greaterThan(APLType left, APLType right) {
+        return new BooleanType(toNumeric(left) > toNumeric(right));
+    }
+
+    /**
+     * Greater or equal (≥)
+     */
+    public static APLType greaterEqual(APLType left, APLType right) {
+        return new BooleanType(toNumeric(left) >= toNumeric(right));
+    }
+
+    /**
+     * Monadic iota (⍳)
+     */
+    public static APLType iota(APLType operand) {
+        long n = toNonNegativeInteger(operand, "Iota argument");
+        if (n > 1_000_000) {
+            throw new IllegalArgumentException("Iota argument too large: " + n);
+        }
+        List<APLType> elements = new ArrayList<>();
+        for (long i = 0; i < n; i++) {
+            elements.add(new IntegerType(i));
+        }
+        return new ArrayType(elements);
+    }
+
+    /**
      * Helper method to convert any scalar to numeric value.
      */
     private static double toNumeric(APLType value) {
@@ -298,5 +506,20 @@ public class MathOperations {
             return s.toNumeric();
         }
         throw new IllegalArgumentException("Cannot convert non-scalar to numeric");
+    }
+
+    private static long toNonNegativeInteger(APLType value, String name) {
+        double numeric = toNumeric(value);
+        if (numeric < 0 || numeric != Math.floor(numeric)) {
+            throw new ArithmeticException(name + " must be a non-negative integer");
+        }
+        return (long) numeric;
+    }
+
+    private static boolean isNumericScalar(APLType value) {
+        return value instanceof IntegerType
+            || value instanceof FloatingPointType
+            || value instanceof BooleanType
+            || value instanceof CharacterType;
     }
 }
