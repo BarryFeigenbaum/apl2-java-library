@@ -1,5 +1,6 @@
 package com.apl2.operations;
 
+import com.apl2.APLRuntime;
 import com.apl2.types.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -187,7 +188,7 @@ public class ArrayOperations {
             throw new IllegalArgumentException("Cannot take first element of empty array");
         }
         if (array.getRank() == 1) {
-            return array.getElement(0).deepCopy();
+            return array.getRawElement(0).deepCopy();
         }
         int[] shape = array.getShape();
         int cellSize = 1;
@@ -346,13 +347,13 @@ public class ArrayOperations {
      */
     public static APLType disclose(APLType value) {
         if (value instanceof ArrayType array && !array.isEmpty()) {
-            return array.getElement(0).deepCopy();
+            return array.getRawElement(0).deepCopy();
         }
         return value.deepCopy();
     }
 
     /**
-     * Pick (dyadic ⊃) using zero-based indexing.
+     * Pick (dyadic ⊃) using the current runtime index origin.
      */
     public static APLType pick(APLType selector, APLType value) {
         if (!(value instanceof ArrayType array)) {
@@ -382,11 +383,11 @@ public class ArrayOperations {
         List<APLType> partitions = new ArrayList<>();
         List<APLType> current = new ArrayList<>();
         for (int i = 0; i < values.size(); i++) {
-            if (((Scalar) marks.getElement(i)).toBoolean() && !current.isEmpty()) {
+            if (((Scalar) marks.getRawElement(i)).toBoolean() && !current.isEmpty()) {
                 partitions.add(new ArrayType(new ArrayList<>(current)));
                 current.clear();
             }
-            current.add(values.getElement(i).deepCopy());
+            current.add(values.getRawElement(i).deepCopy());
         }
         if (!current.isEmpty()) {
             partitions.add(new ArrayType(current));
@@ -428,8 +429,8 @@ public class ArrayOperations {
             indices.add(i);
         }
         indices.sort((a, b) -> {
-            APLType left = array.getElement(a);
-            APLType right = array.getElement(b);
+            APLType left = array.getRawElement(a);
+            APLType right = array.getRawElement(b);
             if (!(left instanceof Scalar leftScalar) || !(right instanceof Scalar rightScalar)) {
                 throw new IllegalArgumentException("Grade only supports scalar array elements");
             }
@@ -441,7 +442,7 @@ public class ArrayOperations {
 
         List<APLType> result = new ArrayList<>(indices.size());
         for (Integer index : indices) {
-            result.add(new IntegerType(index));
+            result.add(new IntegerType(APLRuntime.getInstance().toOriginIndex(index)));
         }
         return new ArrayType(result);
     }
@@ -453,8 +454,8 @@ public class ArrayOperations {
         ArrayType grade = grade(keys, ascending);
         List<APLType> sorted = new ArrayList<>(values.size());
         for (APLType indexValue : grade.getElements()) {
-            int idx = (int) ((IntegerType) indexValue).getValue();
-            sorted.add(values.getElement(idx).deepCopy());
+            int idx = APLRuntime.getInstance().toZeroBasedIndex((int) ((IntegerType) indexValue).getValue(), values.size());
+            sorted.add(values.getRawElement(idx).deepCopy());
         }
         return new ArrayType(sorted, values.getShape());
     }
@@ -532,9 +533,9 @@ public class ArrayOperations {
             return new IntegerType(0);
         }
         
-        APLType result = array.getElement(0).deepCopy();
+        APLType result = array.getRawElement(0).deepCopy();
         for (int i = 1; i < array.size(); i++) {
-            result = MathOperations.add(result, array.getElement(i));
+            result = MathOperations.add(result, array.getRawElement(i));
         }
         return result;
     }
@@ -547,9 +548,9 @@ public class ArrayOperations {
             return new IntegerType(1);
         }
         
-        APLType result = array.getElement(0).deepCopy();
+        APLType result = array.getRawElement(0).deepCopy();
         for (int i = 1; i < array.size(); i++) {
-            result = MathOperations.multiply(result, array.getElement(i));
+            result = MathOperations.multiply(result, array.getRawElement(i));
         }
         return result;
     }
@@ -562,9 +563,9 @@ public class ArrayOperations {
             throw new IllegalArgumentException("Cannot find maximum of empty array");
         }
         
-        APLType result = array.getElement(0);
+        APLType result = array.getRawElement(0);
         for (int i = 1; i < array.size(); i++) {
-            result = MathOperations.max(result, array.getElement(i));
+            result = MathOperations.max(result, array.getRawElement(i));
         }
         return result;
     }
@@ -577,9 +578,9 @@ public class ArrayOperations {
             throw new IllegalArgumentException("Cannot find minimum of empty array");
         }
         
-        APLType result = array.getElement(0);
+        APLType result = array.getRawElement(0);
         for (int i = 1; i < array.size(); i++) {
-            result = MathOperations.min(result, array.getElement(i));
+            result = MathOperations.min(result, array.getRawElement(i));
         }
         return result;
     }

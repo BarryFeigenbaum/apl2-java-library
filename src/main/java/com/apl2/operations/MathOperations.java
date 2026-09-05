@@ -1,5 +1,6 @@
 package com.apl2.operations;
 
+import com.apl2.APLRuntime;
 import com.apl2.types.*;
 import com.apl2.types.specialized.*;
 import java.math.BigDecimal;
@@ -443,7 +444,7 @@ public class MathOperations {
             return new BooleanType(lComplex.equals(rComplex));
         }
         if (left instanceof Scalar && right instanceof Scalar && isNumericScalar(left) && isNumericScalar(right)) {
-            return new BooleanType(Math.abs(toNumeric(left) - toNumeric(right)) < 1e-15);
+            return new BooleanType(APLRuntime.getInstance().areClose(toNumeric(left), toNumeric(right)));
         }
         return new BooleanType(left.equals(right));
     }
@@ -492,8 +493,9 @@ public class MathOperations {
             throw new IllegalArgumentException("Iota argument too large: " + n);
         }
         List<APLType> elements = new ArrayList<>();
+        long indexOrigin = APLRuntime.getInstance().currentContext().getIndexOrigin();
         for (long i = 0; i < n; i++) {
-            elements.add(new IntegerType(i));
+            elements.add(new IntegerType(i + indexOrigin));
         }
         return new ArrayType(elements);
     }
@@ -520,6 +522,8 @@ public class MathOperations {
         return value instanceof IntegerType
             || value instanceof FloatingPointType
             || value instanceof BooleanType
-            || value instanceof CharacterType;
+            || value instanceof CharacterType
+            || value instanceof BigIntegerType
+            || value instanceof BigDecimalType;
     }
 }

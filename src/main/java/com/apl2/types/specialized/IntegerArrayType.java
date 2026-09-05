@@ -1,5 +1,7 @@
 package com.apl2.types;
 
+import com.apl2.APLRuntime;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -57,10 +59,7 @@ public final class IntegerArrayType implements APLType {
     }
 
     public long getElement(int index) {
-        if (index < 0 || index >= data.length) {
-            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + data.length);
-        }
-        return data[index];
+        return data[APLRuntime.getInstance().toZeroBasedIndex(index, data.length)];
     }
 
     /**
@@ -72,7 +71,7 @@ public final class IntegerArrayType implements APLType {
                 String.format("Expected %d indices, got %d", rank, indices.length)
             );
         }
-        int flatIndex = toFlatIndex(indices);
+        int flatIndex = toFlatIndex(APLRuntime.getInstance().toZeroBasedIndices(indices, shape));
         return data[flatIndex];
     }
 
@@ -80,12 +79,6 @@ public final class IntegerArrayType implements APLType {
         int flatIndex = 0;
         int multiplier = 1;
         for (int i = rank - 1; i >= 0; i--) {
-            if (indices[i] < 0 || indices[i] >= shape[i]) {
-                throw new IndexOutOfBoundsException(
-                    String.format("Index [%s] out of bounds for shape %s",
-                        Arrays.toString(indices), Arrays.toString(shape))
-                );
-            }
             flatIndex += indices[i] * multiplier;
             multiplier *= shape[i];
         }

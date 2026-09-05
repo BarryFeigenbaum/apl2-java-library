@@ -1,5 +1,6 @@
 package com.apl2.operations;
 
+import com.apl2.APLRuntime;
 import com.apl2.types.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -76,15 +77,17 @@ public final class PrimitiveOperations {
         if (right instanceof ArrayType rightArray) {
             List<APLType> indices = new ArrayList<>(rightArray.size());
             List<APLType> leftElements = leftArray.getElements();
-            long defaultIndex = leftElements.size();
+            APLRuntime runtime = APLRuntime.getInstance();
+            long defaultIndex = runtime.toOriginIndex(leftElements.size());
             for (APLType value : rightArray.getElements()) {
                 int idx = leftElements.indexOf(value);
-                indices.add(new IntegerType(idx >= 0 ? idx : defaultIndex));
+                indices.add(new IntegerType(idx >= 0 ? runtime.toOriginIndex(idx) : defaultIndex));
             }
             return new ArrayType(indices);
         }
         int idx = leftArray.getElements().indexOf(right);
-        return new IntegerType(idx >= 0 ? idx : leftArray.size());
+        APLRuntime runtime = APLRuntime.getInstance();
+        return new IntegerType(idx >= 0 ? runtime.toOriginIndex(idx) : runtime.toOriginIndex(leftArray.size()));
     }
 
     /**
@@ -93,7 +96,7 @@ public final class PrimitiveOperations {
     public static APLType indicesWhere(APLType value) {
         if (!(value instanceof ArrayType array)) {
             if (toBoolean(value)) {
-                return new ArrayType(List.of(new IntegerType(0)));
+                return new ArrayType(List.of(new IntegerType(APLRuntime.getInstance().toOriginIndex(0))));
             }
             return new ArrayType(List.of());
         }
@@ -101,7 +104,7 @@ public final class PrimitiveOperations {
         List<APLType> elements = array.getElements();
         for (int i = 0; i < elements.size(); i++) {
             if (toBoolean(elements.get(i))) {
-                indices.add(new IntegerType(i));
+                indices.add(new IntegerType(APLRuntime.getInstance().toOriginIndex(i)));
             }
         }
         return new ArrayType(indices);
@@ -119,8 +122,8 @@ public final class PrimitiveOperations {
         }
         List<APLType> selected = new ArrayList<>();
         for (int i = 0; i < values.size(); i++) {
-            if (toBoolean(mask.getElement(i))) {
-                selected.add(values.getElement(i).deepCopy());
+            if (toBoolean(mask.getRawElement(i))) {
+                selected.add(values.getRawElement(i).deepCopy());
             }
         }
         return new ArrayType(selected);
@@ -156,7 +159,7 @@ public final class PrimitiveOperations {
     }
 
     public static APLType format(APLType operand) {
-        return new StringType(operand.toString());
+        return new StringType(APLRuntime.getInstance().format(operand));
     }
 
     public static APLType formatWithPattern(APLType left, APLType right) {
@@ -168,7 +171,7 @@ public final class PrimitiveOperations {
             }
             return new StringType(decimalFormat.format(scalar.toNumeric()));
         }
-        return new StringType(right.toString());
+        return new StringType(APLRuntime.getInstance().format(right));
     }
 
     private static boolean toBoolean(APLType value) {
